@@ -1,15 +1,15 @@
 package core
 
 import (
-	"errors"
 	"fmt"
+	"log"
 	"syscall"
 )
 
-func createSocket() (fileDescriptor int, error error) {
+func CreateSocket() (fileDescriptor int, error error) {
 	socketFd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_STREAM, 0)
 	if err != nil {
-		return socketFd, errors.New("socket creation failed")
+		return socketFd, err//errors.New("socket creation failed")
 	}
 
 	return socketFd, nil
@@ -18,7 +18,7 @@ func createSocket() (fileDescriptor int, error error) {
 func bindSocket(fileDescriptor int, address syscall.Sockaddr) error {
 	err := syscall.Bind(fileDescriptor, address)
 	if err != nil {
-		return errors.New("socket bind failed")
+		return err//errors.New("socket bind failed")
 	}
 
 	return nil
@@ -27,7 +27,7 @@ func bindSocket(fileDescriptor int, address syscall.Sockaddr) error {
 func listen(fileDescriptor int, backlog int) error {
 	err := syscall.Listen(fileDescriptor, backlog)
 	if err != nil {
-		return errors.New("socket listening failed")
+		return err//errors.New("socket listening failed")
 	}
 
 	return nil
@@ -36,7 +36,7 @@ func listen(fileDescriptor int, backlog int) error {
 func accept(fileDescriptor int) (nfd int, sockAddr syscall.Sockaddr, err error) {
 	nfd, sockAddr, err = syscall.Accept(fileDescriptor)
 	if err != nil {
-		return nfd, sockAddr, errors.New("socket accept failed")
+		return nfd, sockAddr, err//errors.New("socket accept failed")
 	}
 
 	return nfd, sockAddr, nil
@@ -44,7 +44,7 @@ func accept(fileDescriptor int) (nfd int, sockAddr syscall.Sockaddr, err error) 
 
 func CreateAndBind() (socketFd int, error error) {
 	fmt.Println("[*] (VERBOSE) Creating raw socket")
-	socketFd, err := createSocket()
+	socketFd, err := CreateSocket()
 	if err != nil {
 		return socketFd, err
 	}
@@ -55,7 +55,7 @@ func CreateAndBind() (socketFd int, error error) {
 		Addr: [4]byte{127, 0, 0, 1},
 	}
 
-	fmt.Println("[*] (VERBOSE) Binding socket with fd", socketFd)
+	fmt.Println("[*] (VERBOSE) Binding socket with fd", socketFd, "on", sockAddress.Addr, ":", sockAddress.Port)
 	err = bindSocket(socketFd, sockAddress)
 	fmt.Println("[*] (VERBOSE) Socket bound succesfully")
 
@@ -79,7 +79,25 @@ func ListenAndAccept(socketFd int) error {
 
 	fmt.Println("[*] Socket with fd", socketFd, "accepting connection on fd", nfd, sockAddr)
 
+	data := make([]byte, 27)
+	n, err := syscall.Read(nfd, data)
+	if err != nil {
+		return err
+	}
+	log.Printf("Read %d bytes", n)
+	log.Printf("Content: %s", data)
+
+	data = []byte(`Hello World from the server`)
+	n, err = syscall.Write(nfd, data)
+	if err != nil {
+		return err
+	}
+	log.Printf("Write %d bytes", n)
+	log.Printf("Content: %s", data)
+
 	_, _ = fmt.Scanln()
+
+
 
 	return nil
 }
