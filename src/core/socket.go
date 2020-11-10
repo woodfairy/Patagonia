@@ -1,9 +1,9 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"log"
-	"strings"
 	"syscall"
 )
 
@@ -28,7 +28,7 @@ func bindSocket(fileDescriptor int, address syscall.Sockaddr) error {
 func listen(fileDescriptor int, backlog int) error {
 	err := syscall.Listen(fileDescriptor, backlog)
 	if err != nil {
-		return err//errors.New("socket listening failed")
+		return errors.New("socket listening failed")
 	}
 
 	return nil
@@ -68,48 +68,40 @@ func CreateAndBind() (socketFd int, error error) {
 }
 
 func ListenAndAccept(socketFd int) error {
-	defer syscall.Close(socketFd)
 	err := listen(socketFd, 0x41)
 	if err != nil {
 		return err
 	}
 
 	nfd, sockAddr, err := accept(socketFd)
+	defer syscall.Close(nfd)
+	
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("[*] Socket with fd", socketFd, "accepting connection on fd", nfd, sockAddr)
 
-	var interrupt = false
 
-	for !interrupt {
-		data := make([]byte, 4096)
-		n, err := syscall.Read(nfd, data)
-		if err != nil {
-			interrupt = true
-			return err
-		}
-
-		log.Printf("Read %d bytes", n)
-		log.Printf("Content: %s", data)
-
-		if strings.Contains(string(data), "ENDCONN") {
-			interrupt = true
-		}
-
-		data = []byte("Hello world from the server\n")
-		n, err = syscall.Write(nfd, data)
-		if err != nil {
-			interrupt = true
-			return err
-		}
-
-		log.Printf("Write %d bytes", n)
-		log.Printf("Content: %s", data)
+	data := make([]byte, 4096)
+	n, err := syscall.Read(nfd, data)
+	if err != nil {
+		return err
 	}
 
-	syscall.Close(nfd)
+	log.Printf("Received %d bytes", n)
+	log.Printf("Content: %s", data)
+
+
+	data = []byte("Hello world from the server\n")
+	n, err = syscall.Write(nfd, data)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Wrote %d bytes", n)
+	log.Printf("Content: %s\n", data)
+
 
 	return nil
 }

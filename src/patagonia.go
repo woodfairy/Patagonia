@@ -12,9 +12,14 @@ func main() {
 		fmt.Println("[*] (ERR)", err)
 	}
 
-	fmt.Println("[*] (VERBOSE) Listening and accepting connection")
-	err = core.ListenAndAccept(socketFd)
-	if err != nil {
-		fmt.Println("[*] (ERR)", err)
+	var interrupt = false
+
+	for !interrupt {
+		fmt.Println("[*] (VERBOSE) Listening and accepting connection")
+		err = core.ListenAndAccept(socketFd)
+		if err != nil {
+			fmt.Println("[*] (ERR)", err)
+			interrupt = true
+		}
 	}
 }
