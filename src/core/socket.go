@@ -92,7 +92,7 @@ func ListenAndAccept(socketFd int) error {
 	log.Printf("Content: %s", data)
 
 
-	data = []byte("Hello world from the server\n")
+	data = []byte("Hello world from the server")
 	n, err = syscall.Write(nfd, data)
 	if err != nil {
 		return err

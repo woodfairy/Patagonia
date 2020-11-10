@@ -8,6 +8,7 @@ import (
 
 func main() {
 	port := flag.Int("p", 8080, "port")
+	flag.Parse()
 	fmt.Println("[*] (VERBOSE) Creating and binding socket")
 	socketFd, err := core.CreateAndBind(*port)
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 
 func main()  {
 	port := flag.Int("p", 8080, "port")
+	flag.Parse()
 	fmt.Println("[*] Starting Patagonia client")
 
 	var interrupt = false
@@ -36,6 +37,8 @@ func createConnectWrite(port int) error {
 		Addr: [4]byte{127, 0, 0, 1},
 	})
 
+	fmt.Println("[*] Socket connected on fd", socketFd)
+
 	if err != nil {
 		return err
 	}
@@ -45,6 +48,7 @@ func createConnectWrite(port int) error {
 	input, _ := reader.ReadString('\n')
 	input = strings.Replace(input, "\n", "", -1)
 
+	//input := "Hello from the client"
 	file := os.NewFile(uintptr(socketFd), "pipe")
 	_, err = file.Write([]byte(input))
 	if err != nil {
@@ -62,6 +66,7 @@ func createConnectWrite(port int) error {
 	log.Printf("Received %d bytes", n)
 	log.Printf("Content: %s", data)
 
+	syscall.Close(socketFd)
 
 	return nil
 }
