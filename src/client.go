@@ -3,6 +3,7 @@ package main
 import (
 	"Patagonia/src/core"
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,11 +12,12 @@ import (
 )
 
 func main()  {
+	port := flag.Int("p", 8080, "port")
 	fmt.Println("[*] Starting Patagonia client")
 
 	var interrupt = false
 	for !interrupt {
-		err := createConnectWrite()
+		err := createConnectWrite(*port)
 		if err != nil {
 			fmt.Println("[*] (ERR)", err)
 			interrupt = true
@@ -23,14 +25,14 @@ func main()  {
 	}
 }
 
-func createConnectWrite() error {
+func createConnectWrite(port int) error {
 	socketFd, err := core.CreateSocket()
 	if err != nil {
 		return err
 	}
 
 	err = syscall.Connect(socketFd, &syscall.SockaddrInet4{
-		Port: 8080,
+		Port: port,
 		Addr: [4]byte{127, 0, 0, 1},
 	})
 

@@ -2,12 +2,14 @@ package main
 
 import (
 	"Patagonia/src/core"
+	"flag"
 	"fmt"
 )
 
 func main() {
+	port := flag.Int("p", 8080, "port")
 	fmt.Println("[*] (VERBOSE) Creating and binding socket")
-	socketFd, err := core.CreateAndBind()
+	socketFd, err := core.CreateAndBind(*port)
 	if err != nil {
 		fmt.Println("[*] (ERR)", err)
 	}

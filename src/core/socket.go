@@ -43,7 +43,7 @@ func accept(fileDescriptor int) (nfd int, sockAddr syscall.Sockaddr, err error) 
 	return nfd, sockAddr, nil
 }
 
-func CreateAndBind() (socketFd int, error error) {
+func CreateAndBind(port int) (socketFd int, error error) {
 	fmt.Println("[*] (VERBOSE) Creating raw socket")
 	socketFd, err := CreateSocket()
 	if err != nil {
@@ -52,7 +52,7 @@ func CreateAndBind() (socketFd int, error error) {
 	fmt.Println("[*] (VERBOSE) Socket created succesfully with fd", socketFd)
 
 	sockAddress := &syscall.SockaddrInet4{
-		Port: 8080,
+		Port: port,
 		Addr: [4]byte{127, 0, 0, 1},
 	}
 
@@ -74,8 +74,7 @@ func ListenAndAccept(socketFd int) error {
 	}
 
 	nfd, sockAddr, err := accept(socketFd)
-	defer syscall.Close(nfd)
-	
+
 	if err != nil {
 		return err
 	}
@@ -102,6 +101,7 @@ func ListenAndAccept(socketFd int) error {
 	log.Printf("Wrote %d bytes", n)
 	log.Printf("Content: %s\n", data)
 
+	syscall.Close(nfd)
 
 	return nil
 }
