@@ -1,10 +1,12 @@
-package core
+package net
 
 import (
+	"Patagonia/src/core/io"
 	"errors"
 	"fmt"
 	"log"
 	"syscall"
+	"time"
 )
 
 func CreateSocket() (fileDescriptor int, error error) {
@@ -41,6 +43,15 @@ func accept(fileDescriptor int) (nfd int, sockAddr syscall.Sockaddr, err error) 
 	}
 
 	return nfd, sockAddr, nil
+}
+
+func Connect(fileDescriptor int, port int) error {
+	syscall.Connect(fileDescriptor, &syscall.SockaddrInet4{
+		Port: port,
+		Addr: [4]byte{127, 0, 0, 1},
+	})
+
+	return nil
 }
 
 func CreateAndBind(port int) (socketFd int, error error) {
@@ -81,27 +92,50 @@ func ListenAndAccept(socketFd int) error {
 
 	fmt.Println("[*] Socket with fd", socketFd, "accepting connection on fd", nfd, sockAddr)
 
+	start := time.Now()
 
-	data := make([]byte, 4096)
-	n, err := syscall.Read(nfd, data)
+	input, n, err := io.Receive(nfd)
 	if err != nil {
 		return err
 	}
 
 	log.Printf("Received %d bytes", n)
-	log.Printf("Content: %s", data)
+	log.Printf("Content: %s", input)
 
-
-	data = []byte("Hello world from the server")
-	n, err = syscall.Write(nfd, data)
+	data := []byte("<html><head><title>Patagonia</title></head><body><h1>Patagonia</h1><p>It's working! Hello world from the Patagonia server<p></body><html>")
+	n, err = io.Send(nfd, data)
 	if err != nil {
 		return err
 	}
 
+	duration := time.Since(start)
+
 	log.Printf("Wrote %d bytes", n)
 	log.Printf("Content: %s\n", data)
+	log.Printf("Duration: %dms\n", duration.Microseconds())
 
 	syscall.Close(nfd)
+
+	return nil
+}
+
+func ReceiveAndServe(port int) error {
+	fmt.Println("[*] (VERBOSE) Creating and binding socket")
+	socketFd, err := CreateAndBind(port)
+	if err != nil {
+		return err
+	}
+
+	var interrupt = false
+
+	for !interrupt {
+		fmt.Println("[*] (VERBOSE) Listening and accepting connection")
+		err = ListenAndAccept(socketFd)
+		if err != nil {
+			interrupt = true
+			return err
+		}
+	}
 
 	return nil
 }

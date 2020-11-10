@@ -1,7 +1,8 @@
 package main
 
 import (
-	"Patagonia/src/core"
+	"Patagonia/src/core/io"
+	"Patagonia/src/core/net"
 	"bufio"
 	"flag"
 	"fmt"
@@ -27,15 +28,12 @@ func main()  {
 }
 
 func createConnectWrite(port int) error {
-	socketFd, err := core.CreateSocket()
+	socketFd, err := net.CreateSocket()
 	if err != nil {
 		return err
 	}
 
-	err = syscall.Connect(socketFd, &syscall.SockaddrInet4{
-		Port: port,
-		Addr: [4]byte{127, 0, 0, 1},
-	})
+	err = net.Connect(socketFd, port)
 
 	fmt.Println("[*] Socket connected on fd", socketFd)
 
@@ -49,16 +47,13 @@ func createConnectWrite(port int) error {
 	input = strings.Replace(input, "\n", "", -1)
 
 	//input := "Hello from the client"
-	file := os.NewFile(uintptr(socketFd), "pipe")
-	_, err = file.Write([]byte(input))
-	if err != nil {
-		return err
-	}
+	n, err := io.Send(socketFd, []byte(input))
 
+	log.Printf("Wrote: %d bytes", n)
 	log.Printf("Wrote: %s\n", input)
 
-	data := make([]byte, 4096)
-	n, err := syscall.Read(socketFd, data)
+
+	data, n, err := io.Receive(socketFd)
 	if err != nil {
 		return err
 	}
