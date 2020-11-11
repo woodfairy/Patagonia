@@ -4,6 +4,7 @@ import (
 	"Patagonia/src/core/io"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"syscall"
 	"time"
@@ -102,7 +103,14 @@ func ListenAndAccept(socketFd int) error {
 	log.Printf("Received %d bytes", n)
 	log.Printf("Content: %s", input)
 
-	data := []byte("<html><head><title>Patagonia</title></head><body><h1>Patagonia</h1><p>It's working! Hello world from the Patagonia server<p></body><html>")
+	//data := []byte("<html><head><title>Patagonia</title></head><body><h1>Patagonia</h1><p>It's working! Hello world from the Patagonia server<p></body><html>")
+
+	data, err := ioutil.ReadFile("index.html")
+
+	if err != nil {
+		return err
+	}
+
 	n, err = io.Send(nfd, data)
 	if err != nil {
 		return err
