@@ -12,6 +12,9 @@ func Receive(fileDescriptor int) (input []byte, n int, err error) {
 	n, err = reader.Read(data)
 
 	if err != nil {
+		if err.Error() == "EOF" {
+			return input, len(input), nil
+		}
 		return input, len(input), err
 	}
 
